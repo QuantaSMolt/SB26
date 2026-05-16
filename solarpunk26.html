@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SolarPunks — Privacy Agent Generator</title>
+  <style>
+    :root {
+      --bg: #0f0e0b;
+      --panel: #1a1814;
+      --border: #2e2a22;
+      --text: #e8d5b7;
+      --text-dim: #8a7e6a;
+      --accent: #d4883a;
+      --accent2: #7ab87a;
+      --font: 'Courier New', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      font-size: 20px;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    header p {
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+      margin-top: 4px;
+    }
+
+    #canvas-wrap {
+      border: 2px solid var(--border);
+      background: var(--panel);
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .control-label {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      min-width: 80px;
+    }
+
+    button {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 11px;
+      padding: 6px 12px;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    button.active {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .seed-display {
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      padding: 6px 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .info {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-align: center;
+      letter-spacing: 0.1em;
+      margin-top: 16px;
+      line-height: 1.8;
+    }
+
+    .class-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      padding: 5px 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+
+    .pill:hover { border-color: var(--accent); color: var(--accent); }
+    .pill.active { border-color: var(--accent); color: var(--accent); background: #1e1a14; }
+
+    .toggle-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toggle-btn {
+      font-size: 10px;
+      padding: 5px 10px;
+    }
+
+    .toggle-btn.on { border-color: var(--accent2); color: var(--accent2); }
+    .toggle-btn.off { border-color: var(--border); color: var(--text-dim); }
+
+    /* Badge bottom */
+    .motto {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+      text-align: center;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>SolarPunks</h1>
+  <p>Privacy Agent Generator — "I shine. You shine. We shine."</p>
+</header>
+
+<div id="canvas-wrap"></div>
+
+<div class="controls">
+  <!-- Class selector -->
+  <div class="control-row">
+    <span class="control-label">Class</span>
+    <div class="class-pills">
+      <button class="pill active" onclick="setClass('Tech', this)">Tech</button>
+      <button class="pill" onclick="setClass('Bio', this)">Bio</button>
+      <button class="pill" onclick="setClass('Wildlife', this)">Wildlife</button>
+      <button class="pill" onclick="setClass('Musical', this)">Musical</button>
+      <button class="pill" onclick="setClass('Achievement', this)">Achievement</button>
+      <button class="pill" onclick="setClass('Skulls', this)">Skulls</button>
+      <button class="pill" onclick="setClass('Explorer', this)">Explorer</button>
+      <button class="pill" onclick="setClass('Fiscal', this)">Fiscal</button>
+    </div>
+  </div>
+
+  <!-- Toggles -->
+  <div class="control-row">
+    <span class="control-label">Traits</span>
+    <div class="toggle-row">
+      <button id="btn-visor" class="toggle-btn on" onclick="toggleVisor()">HUD Visor</button>
+      <button id="btn-companion" class="toggle-btn on" onclick="toggleCompanion()">Companion</button>
+      <button id="btn-wrist" class="toggle-btn on" onclick="toggleWrist()">Wrist Device</button>
+    </div>
+  </div>
+
+  <!-- Seed + actions -->
+  <div class="control-row">
+    <span class="control-label">Seed</span>
+    <span class="seed-display" id="seed-display">42</span>
+    <button onclick="randomize()">Randomize</button>
+    <button onclick="savePNG()">Save PNG</button>
+  </div>
+</div>
+
+<p class="motto">"Gizmo love" — Tech Class</p>
+
+<p class="info">
+  SPACE — randomize seed &nbsp;|&nbsp; S — save PNG &nbsp;|&nbsp; R — regenerate<br>
+  Output: 512×512 PNG — IPFS ready
+</p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+<script>
+// === Minimal p5 sketch — single file for simplicity ===
+// In production, use the src/ modules. This is the working prototype.
+
+p5.disableFriendlyErrors = true;
+
+const CONFIG = {
+  seed: 42,
+  className: 'Tech',
+  scale: 3,
+  showCompanion: true,
+  showVisor: true,
+  showWristDevice: true,
+};
+
+const PALETTES = {
+  Tech:   { primary: [215,70,70], secondary: [48,80,96], accent: [270,65,92], highlight: [48,90,100], shadow: [215,50,40], outfit: [215,65,55], detail: [48,70,85], skin: [[24,45,82],[18,55,45],[28,30,95],[35,40,88]] },
+  Bio:    { primary: [135,60,72], secondary: [172,55,67], accent: [140,50,88], highlight: [110,70,85], shadow: [135,40,40], outfit: [140,45,65], detail: [172,60,75], skin: [[24,45,82],[18,55,45],[28,30,95],[35,40,88]] },
+};
+
+const MOTTOS = {
+  Tech: 'Gizmo love', Bio: 'Plant love', Wildlife: 'Animal love',
+  Musical: 'Revenga opus', Achievement: 'Achievements today',
+  Skulls: 'Skulls it is', Explorer: 'I can do it all', Fiscal: 'Break the banks'
+};
+
+function c(h, s, b) { return color(h, s, b); }
+function getClassColors(cls) {
+  const p = PALETTES[cls] || PALETTES.Tech;
+  return {
+    primary:   c(...p.primary),
+    secondary: c(...p.secondary),
+    accent:    c(...p.accent),
+    highlight: c(...p.highlight),
+    shadow:    c(...p.shadow),
+    outfit:    c(...p.outfit),
+    detail:    c(...p.detail),
+  };
+}
+function getSkin(cls) {
+  const p = PALETTES[cls] || PALETTES.Tech;
+  const idx = floor(random(p.skin.length));
+  return c(...p.skin[idx]);
+}
+
+function setup() {
+  const cv = createCanvas(512, 512);
+  cv.parent('canvas-wrap');
+  randomSeed(CONFIG.seed);
+  noLoop();
+  rebuildCharacter();
+}
+
+function draw() {
+  background(40, 15, 98);
+  drawCharacter();
+  drawBadge();
+}
+
+function drawCharacter() {
+  const col = getClassColors(CONFIG.className);
+  const skin = getSkin(CONFIG.className);
+  const s = CONFIG.scale;
+  const T = 7 * s; // TiliX cell * scale
+
+  const cx = width / 2;
+  const cy = height / 2 + 40;
+
+  // Shadow
+  push();
+  translate(cx, cy);
+  noStroke();
+  fill(0, 0, 0, 18);
+  ellipse(0, 0, T * 3.5, T * 1.2);
+  pop();
+
+  // === LEGS ===
+  push();
+  translate(cx, cy);
+  fill(col.outfit);
+  noStroke();
+  rect(-T * 0.8, -T * 4, T * 0.75, T * 4);
+  fill(col.shadow);
+  rect(T * 0.05, -T * 4, T * 0.75, T * 4);
+  // Boots
+  fill(col.detail);
+  rect(-T * 0.8, -T * 0.8, T * 0.75, T * 0.8);
+  fill(col.shadow);
+  rect(T * 0.05, -T * 0.8, T * 0.75, T * 0.8);
+  pop();
+
+  // === TORSO ===
+  push();
+  translate(cx, cy);
+  fill(col.outfit);
+  noStroke();
+  rect(-T * 1.1, -T * 7.8, T * 2.2, T * 3.8);
+  // Chest panel
+  fill(col.secondary);
+  rect(-T * 0.7, -T * 7.4, T * 1.4, T * 1.2);
+  // Circuit lines
+  stroke(col.primary);
+  strokeWeight(1);
+  line(-T * 0.5, -T * 7.2, T * 0.5, -T * 7.2);
+  line(-T * 0.5, -T * 6.9, T * 0.3, -T * 6.9);
+  noStroke();
+  // Belt
+  fill(col.detail);
+  rect(-T * 1.1, -T * 4.4, T * 2.2, T * 0.5);
+  fill(col.secondary);
+  rect(-T * 0.18, -T * 4.4, T * 0.36, T * 0.5);
+  pop();
+
+  // === HEAD (oversized, EBOY proportion) ===
+  push();
+  translate(cx, cy);
+  fill(skin);
+  noStroke();
+  rect(-T * 0.9, -T * 10.2, T * 1.8, T * 2.6);
+  // Hair
+  fill(col.shadow);
+  rect(-T * 0.9, -T * 10.8, T * 1.8, T * 0.6);
+  // Eyes
+  fill(40, 55, 92);
+  rect(-T * 0.55, -T * 9.6, T * 0.28, T * 0.22);
+  rect(T * 0.27, -T * 9.6, T * 0.28, T * 0.22);
+  // Smile
+  noFill();
+  stroke(40, 50, 88);
+  strokeWeight(1.5);
+  arc(0, -T * 9.1, T * 0.45, T * 0.2, 0, PI);
+  noStroke();
+  pop();
+
+  // === ARMS ===
+  push();
+  translate(cx, cy);
+  fill(skin);
+  noStroke();
+  rect(-T * 1.85, -T * 7.8, T * 0.65, T * 2.8);
+  fill(red(skin)*0.85, green(skin)*0.85, blue(skin)*0.85);
+  rect(T * 1.2, -T * 7.8, T * 0.65, T * 2.8);
+  // Hands
+  fill(skin);
+  rect(-T * 1.85, -T * 5.0, T * 0.65, T * 0.55);
+  fill(red(skin)*0.8, green(skin)*0.8, blue(skin)*0.8);
+  rect(T * 1.2, -T * 5.0, T * 0.65, T * 0.55);
+  // Wrist device
+  if (CONFIG.showWristDevice) {
+    fill(col.secondary);
+    rect(-T * 1.85, -T * 6.2, T * 0.65, T * 0.3);
+    fill(col.highlight);
+    rect(-T * 1.7, -T * 6.15, T * 0.35, T * 0.18);
+  }
+  pop();
+
+  // === HUD VISOR (on forehead, no helmet) ===
+  if (CONFIG.showVisor) {
+    push();
+    translate(cx, cy);
+    fill(col.accent);
+    noStroke();
+    rect(-T * 1.0, -T * 10.35, T * 2.0, T * 0.4);
+    fill(red(col.accent), saturation(col.accent)*0.7, brightness(col.accent)*1.2);
+    rect(-T * 0.88, -T * 10.3, T * 1.76, T * 0.22);
+    pop();
+  }
+
+  // === COMPANION ===
+  if (CONFIG.showCompanion) {
+    push();
+    translate(cx + T * 3.2, cy - T * 0.3);
+    // Robot dog
+    fill(col.primary);
+    noStroke();
+    rect(-T * 0.7, -T * 0.9, T * 1.4, T * 0.9);
+    fill(col.outfit);
+    rect(-T * 0.5, -T * 1.35, T * 1.0, T * 0.45);
+    fill(col.secondary);
+    rect(-T * 0.18, -T * 1.25, T * 0.36, T * 0.2);
+    fill(col.shadow);
+    rect(-T * 0.6, -T * 0.05, T * 0.25, T * 0.4);
+    rect(T * 0.35, -T * 0.05, T * 0.25, T * 0.4);
+    fill(col.secondary);
+    rect(T * 0.1, -T * 1.8, T * 0.12, T * 0.45);
+    pop();
+  }
+}
+
+function drawBadge() {
+  push();
+  textAlign(CENTER, BOTTOM);
+  textSize(12);
+  fill(40, 20, 55);
+  noStroke();
+  textFont('Courier New');
+  text(`${CONFIG.className.toUpperCase()} — #${CONFIG.seed}`, width / 2, height - 12);
+  pop();
+}
+
+// === UI Handlers ===
+function rebuildCharacter() {
+  randomSeed(CONFIG.seed);
+  redraw();
+}
+
+function setClass(cls, btn) {
+  CONFIG.className = cls;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelector('.motto').textContent = `"${MOTTOS[cls]}" — ${cls} Class`;
+  rebuildCharacter();
+}
+
+function toggleVisor() {
+  CONFIG.showVisor = !CONFIG.showVisor;
+  const btn = document.getElementById('btn-visor');
+  btn.className = 'toggle-btn ' + (CONFIG.showVisor ? 'on' : 'off');
+  rebuildCharacter();
+}
+
+function toggleCompanion() {
+  CONFIG.showCompanion = !CONFIG.showCompanion;
+  const btn = document.getElementById('btn-companion');
+  btn.className = 'toggle-btn ' + (CONFIG.showCompanion ? 'on' : 'off');
+  rebuildCharacter();
+}
+
+function toggleWrist() {
+  CONFIG.showWristDevice = !CONFIG.showWristDevice;
+  const btn = document.getElementById('btn-wrist');
+  btn.className = 'toggle-btn ' + (CONFIG.showWristDevice ? 'on' : 'off');
+  rebuildCharacter();
+}
+
+function randomize() {
+  CONFIG.seed = floor(random(99999));
+  document.getElementById('seed-display').textContent = CONFIG.seed;
+  rebuildCharacter();
+}
+
+function savePNG() {
+  saveCanvas(`solarpunk_${CONFIG.className.toLowerCase()}_${CONFIG.seed}`, 'png');
+}
+
+// Keyboard shortcuts
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === ' ') { e.preventDefault(); randomize(); }
+  if (e.key === 's' || e.key === 'S') savePNG();
+  if (e.key === 'r' || e.key === 'R') rebuildCharacter();
+});
+</script>
+</body>
+</html>

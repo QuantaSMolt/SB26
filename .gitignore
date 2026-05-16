@@ -1,0 +1,18 @@
+# SolarPunk 26
+
+## Ignore local dev artifacts
+*.png
+*.jpg
+*.jpeg
+*.gif
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+dist/
+build/
+.cache/
+__pycache__/
+
+## Keep assets
+# assets/ — palettes, references — keep all
